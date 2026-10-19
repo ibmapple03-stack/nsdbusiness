@@ -20,7 +20,7 @@ Public website for NSD Business Academy Limited (Yola, Adamawa State; CAC RC 990
 ## Architecture rules
 
 - Pages read content only through `src/server/public-data.ts`, which returns `published` entries from `src/content/`.
-- Enquiry forms: Zod validation, honeypot, signed timing token, rate limit, then `sendEmail()` to `ENQUIRY_TO` (server-side FormSubmit AJAX by default in production; Resend optional). Nothing is stored.
+- Enquiry forms: Zod validation, honeypot, signed timing token, rate limit, then `sendEmail()` to `ENQUIRY_TO` (FormSubmit by default in production: the server validates, then the visitor's browser posts the returned request to formsubmit.co — FormSubmit is slow/unreliable from servers; Resend optional). Nothing is stored.
 - Money displayed via `src/lib/money.ts`; times shown as WAT via `src/lib/time.ts`.
 
 ## Testing

@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import type { ActionResult } from "@/components/ui/action-form";
-import { EmailNotActivatedError, sendEmail } from "@/server/email";
+import { formSubmitRequest, sendEmail } from "@/server/email";
 import { env } from "@/server/env";
 import { enquiryEmail, enquiryInput, fieldErrors, formToObject } from "@/server/enquiry";
 import { formTokenAge } from "@/server/form-token";
@@ -30,13 +30,16 @@ export async function submitEnquiry(_prev: ActionResult, formData: FormData): Pr
   const parsed = enquiryInput.safeParse(formToObject(formData));
   if (!parsed.success) return { ok: false, message: "Check the highlighted fields.", fieldErrors: fieldErrors(parsed.error) };
 
+  const mail = enquiryEmail(parsed.data, env.ENQUIRY_TO);
+  if (env.EMAIL_DRIVER === "formsubmit") {
+    // Validated here; the visitor's browser hands it to FormSubmit, which emails the office.
+    return { ok: true, deliver: { ...formSubmitRequest(mail), fallbackEmail: env.ENQUIRY_TO } };
+  }
+
   try {
-    await sendEmail(enquiryEmail(parsed.data, env.ENQUIRY_TO));
+    await sendEmail(mail);
   } catch (e) {
     console.error("Enquiry email failed", e);
-    if (e instanceof EmailNotActivatedError) {
-      return { ok: false, message: `Online messages are being switched on. Please email ${env.ENQUIRY_TO} for now.` };
-    }
     return { ok: false, message: `Your message could not be sent. Please email ${env.ENQUIRY_TO} instead.` };
   }
   return thanks;

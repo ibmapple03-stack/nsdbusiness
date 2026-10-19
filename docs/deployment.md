@@ -10,7 +10,7 @@
 
 ## Enquiry forms (FormSubmit — on by default)
 
-On Vercel the forms work with no settings: each message is sent through **FormSubmit** (formsubmit.co, free, no account or DNS records) to `ENQUIRY_TO`, which defaults to info@nsdbusinessltd.com. The visitor's address is set as Reply-To.
+On Vercel the forms work with no settings: the website checks each message, then the visitor's browser sends it through **FormSubmit** (formsubmit.co, free, no account or DNS records) to `ENQUIRY_TO`, which defaults to info@nsdbusinessltd.com. The visitor's address is set as Reply-To.
 
 **One-time activation**
 1. Make sure info@ can receive email.

@@ -15,7 +15,8 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self'",
-      "connect-src 'self'",
+      // Enquiry forms are delivered from the browser to FormSubmit.
+      "connect-src 'self' https://formsubmit.co",
       "frame-src https://www.google.com https://maps.google.com",
       "frame-ancestors 'none'",
       "form-action 'self'",

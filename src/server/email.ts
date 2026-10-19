@@ -1,5 +1,4 @@
 import "server-only";
-import { siteUrl } from "@/lib/site";
 import { env } from "@/server/env";
 
 export type EmailMessage = {
@@ -11,12 +10,29 @@ export type EmailMessage = {
   fields?: Record<string, string>;
 };
 
-export class EmailNotActivatedError extends Error {}
+/**
+ * FormSubmit request for a message. FormSubmit only accepts submissions from
+ * visitors' browsers, so the server validates the enquiry and returns this
+ * request for the browser to send (see components/ui/action-form.tsx).
+ */
+export function formSubmitRequest(message: EmailMessage) {
+  return {
+    url: `https://formsubmit.co/ajax/${encodeURIComponent(env.FORMSUBMIT_ALIAS ?? message.to)}`,
+    payload: {
+      ...(message.fields ?? { Message: message.text }),
+      _subject: message.subject,
+      ...(message.replyTo ? { _replyto: message.replyTo } : {}),
+      _template: "table",
+      // Spam checks (honeypot, timing token, rate limit) already ran on our server.
+      _captcha: "false",
+    } as Record<string, string>,
+  };
+}
 
 /**
  * Email adapter.
  * - console: development; prints the message.
- * - formsubmit: posts to FormSubmit's AJAX endpoint, which emails `to`.
+ * - formsubmit: not sent from the server; see formSubmitRequest().
  * - resend: Resend API (needs RESEND_API_KEY and a verified sending domain).
  */
 export async function sendEmail(message: EmailMessage): Promise<void> {
@@ -25,26 +41,7 @@ export async function sendEmail(message: EmailMessage): Promise<void> {
     return;
   }
 
-  if (env.EMAIL_DRIVER === "formsubmit") {
-    const target = env.FORMSUBMIT_ALIAS ?? message.to;
-    const site = siteUrl();
-    const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(target)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json", Origin: site, Referer: `${site}/` },
-      body: JSON.stringify({
-        ...(message.fields ?? { Message: message.text }),
-        _subject: message.subject,
-        ...(message.replyTo ? { _replyto: message.replyTo } : {}),
-        _template: "table",
-        // Spam checks (honeypot, timing token, rate limit) run on our server before this call.
-        _captcha: "false",
-      }),
-    });
-    const body = (await res.json().catch(() => null)) as { success?: string | boolean; message?: string } | null;
-    if (res.ok && (body?.success === true || body?.success === "true")) return;
-    if (body?.message && /activat/i.test(body.message)) throw new EmailNotActivatedError(body.message);
-    throw new Error(`FormSubmit rejected the message (HTTP ${res.status}): ${body?.message ?? "no details"}`);
-  }
+  if (env.EMAIL_DRIVER === "formsubmit") throw new Error("FormSubmit messages are sent from the browser; use formSubmitRequest()");
 
   if (!env.RESEND_API_KEY) throw new Error("EMAIL_DRIVER=resend requires RESEND_API_KEY");
   const res = await fetch("https://api.resend.com/emails", {

@@ -61,19 +61,43 @@ test.describe("keyboard use", () => {
 });
 
 test.describe("enquiry form", () => {
-  test("shows field errors, then accepts a valid message", async ({ page, isMobile }) => {
+  test("shows field errors, then the browser delivers a valid message to FormSubmit", async ({ page, isMobile }) => {
     test.skip(isMobile, "run once");
+    const sent: Record<string, string>[] = [];
+    await page.route("https://formsubmit.co/ajax/**", async (route) => {
+      sent.push(route.request().postDataJSON());
+      await route.fulfill({ json: { success: "true", message: "The form was submitted successfully." } });
+    });
+
     await page.goto("/contact");
     await page.waitForTimeout(3_200); // the form rejects instant (bot-like) submissions
     await page.getByRole("button", { name: "Send message" }).click();
     await expect(page.getByText("Check the highlighted fields.")).toBeVisible();
     await expect(page.getByLabel("Your name")).toHaveAttribute("aria-invalid", "true");
+    expect(sent).toHaveLength(0);
 
     await page.getByLabel("Your name").fill("Test Visitor");
     await page.getByLabel("Email address").fill("visitor@example.test");
-    await page.getByLabel("Your message").fill("When does the next bookkeeping course start?");
+    await page.getByLabel("Your message").fill("When does the next course start?");
     await page.getByLabel(/I agree that NSD Business Academy/).check();
     await page.getByRole("button", { name: "Send message" }).click();
     await expect(page.getByText(/Your message has been sent to the academy office/)).toBeVisible();
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toMatchObject({ Name: "Test Visitor", Message: "When does the next course start?", _replyto: "visitor@example.test", _captcha: "false" });
+  });
+
+  test("explains when FormSubmit has not been activated yet", async ({ page, isMobile }) => {
+    test.skip(isMobile, "run once");
+    await page.route("https://formsubmit.co/ajax/**", (route) =>
+      route.fulfill({ json: { success: "false", message: "This form needs Activation. We've sent you an email containing an 'Activate Form' link." } }),
+    );
+    await page.goto("/contact");
+    await page.waitForTimeout(3_200);
+    await page.getByLabel("Your name").fill("Test Visitor");
+    await page.getByLabel("Email address").fill("visitor@example.test");
+    await page.getByLabel("Your message").fill("Hello");
+    await page.getByLabel(/I agree that NSD Business Academy/).check();
+    await page.getByRole("button", { name: "Send message" }).click();
+    await expect(page.getByText(/Online messages are being switched on/)).toBeVisible();
   });
 });
