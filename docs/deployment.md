@@ -5,25 +5,25 @@
 ## First deployment
 
 1. In Vercel, import the repository. Leave the build settings on their defaults.
-2. Deploy. The site works with no environment variables; the enquiry forms show the office phone and email until step 3 is done.
+2. Deploy. The site works with no environment variables, including the enquiry forms (see below).
 3. Connect the domain: Vercel → Settings → Domains → add `www.nsdbusinessltd.com` (and `nsdbusinessltd.com`, redirecting to www). Add the DNS records Vercel shows at the domain registrar.
 
-## Turning on the enquiry forms
+## Enquiry forms (FormSubmit — on by default)
 
-1. Create a Resend account (resend.com), add the domain `nsdbusinessltd.com`, and add the DNS records it shows (SPF, DKIM; add a DMARC record too). Wait until Resend shows the domain as verified.
-2. Create a Resend API key with "sending access".
-3. In Vercel → Settings → Environment Variables, add:
+On Vercel the forms work with no settings: each message is sent through **FormSubmit** (formsubmit.co, free, no account or DNS records) to `ENQUIRY_TO`, which defaults to info@nsdbusinessltd.com. The visitor's address is set as Reply-To.
 
-| Key | Value |
-|---|---|
-| `NEXT_PUBLIC_SITE_URL` | `https://www.nsdbusinessltd.com` |
-| `EMAIL_DRIVER` | `resend` |
-| `RESEND_API_KEY` | the key from Resend |
-| `EMAIL_FROM` | `NSD Business Academy <no-reply@nsdbusinessltd.com>` |
-| `ENQUIRY_TO` | `info@nsdbusinessltd.com` |
-| `FORM_SECRET` | a random value: `openssl rand -base64 32` |
+**One-time activation**
+1. Make sure info@ can receive email.
+2. Send a test message from the live site's Contact page. The site will say online messages are being switched on — that is expected.
+3. Open info@: FormSubmit sends an email with an **Activate Form** button. Click it.
+4. Send another test message; it should now arrive in info@ (check spam the first time).
 
-4. Redeploy (Deployments → ⋯ → Redeploy), then send a test message from each form and confirm it arrives at info@.
+**Optional, after activation**
+- FormSubmit's confirmation email contains a random string that can replace the email address. Add it in Vercel as `FORMSUBMIT_ALIAS`, then redeploy.
+- Add `FORM_SECRET` (a random value from `openssl rand -base64 32`) for stronger spam protection, then redeploy.
+- To send copies elsewhere, set `ENQUIRY_TO` to another address (it then needs activating once too).
+
+**Alternative: Resend.** For delivery through your own domain, set `EMAIL_DRIVER=resend`, `RESEND_API_KEY` and `EMAIL_FROM` after verifying the domain in Resend.
 
 Never set `E2E_CONSOLE_EMAIL` on Vercel; it exists only for automated tests.
 
@@ -31,5 +31,5 @@ Never set `E2E_CONSOLE_EMAIL` on Vercel; it exists only for automated tests.
 
 - [ ] Contact details, mailboxes and phone tested
 - [ ] Policies reviewed by a legal professional
-- [ ] Enquiry forms send to info@ (or are deliberately left as phone/email)
+- [ ] FormSubmit activated and a test message received at info@
 - [ ] Logo replaced with the original vector export (recommended)

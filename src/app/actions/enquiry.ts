@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import type { ActionResult } from "@/components/ui/action-form";
-import { sendEmail } from "@/server/email";
+import { EmailNotActivatedError, sendEmail } from "@/server/email";
 import { env } from "@/server/env";
 import { enquiryEmail, enquiryInput, fieldErrors, formToObject } from "@/server/enquiry";
 import { formTokenAge } from "@/server/form-token";
@@ -34,6 +34,9 @@ export async function submitEnquiry(_prev: ActionResult, formData: FormData): Pr
     await sendEmail(enquiryEmail(parsed.data, env.ENQUIRY_TO));
   } catch (e) {
     console.error("Enquiry email failed", e);
+    if (e instanceof EmailNotActivatedError) {
+      return { ok: false, message: `Online messages are being switched on. Please email ${env.ENQUIRY_TO} for now.` };
+    }
     return { ok: false, message: `Your message could not be sent. Please email ${env.ENQUIRY_TO} instead.` };
   }
   return thanks;

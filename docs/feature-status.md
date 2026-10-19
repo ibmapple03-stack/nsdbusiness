@@ -11,12 +11,12 @@ Updated: 19 October 2026. The project is now the public website only. Logins, th
 | | Contact details | Working | Office hours and map pin awaiting confirmation |
 | | Policies (5) | Working | Gaps filled from management guidance; legal review pending |
 | | Incorporation announcement | Working | |
-| Forms | Contact, corporate training, partnership enquiries emailed to the office | Working | Needs a Resend account and key in production; until then, phone and email are shown |
+| Forms | Contact, corporate training, partnership enquiries emailed to the office | Working | Via FormSubmit, no settings needed; one-time activation from info@ |
 | | Spam protection: honeypot, timing token, rate limit | Working | Rate limit is per server instance (no database) |
 | Design | Brand tokens, Poppins/Inter, logo, icons, social image | Working | Logo extracted from a screenshot; vector still wanted |
 | | Accessibility, reduced motion, mobile layouts | Working | Automated axe checks on every page at 390px and 1440px |
 | SEO | Metadata, Open Graph, sitemap.xml, robots.txt | Working | |
-| Hosting | Builds on Vercel with no settings or database | Working | Domain and Resend still to connect |
+| Hosting | Builds on Vercel with no settings or database | Working | Domain still to connect |
 
 ## Moved to the separate portal project
 

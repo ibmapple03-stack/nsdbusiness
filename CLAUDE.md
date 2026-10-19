@@ -2,7 +2,7 @@
 
 # NSD Business Academy — project rules
 
-Public website for NSD Business Academy Limited (Yola, Adamawa State; CAC RC 9902304). Next.js 16 (App Router, Cache Components) + TypeScript + Tailwind 4. **No database and no logins**: content lives in `src/content/`; enquiry forms email the office via Resend. Student/staff portals are a separate project — do not add auth, admin or database code here (the earlier platform is on the `platform-stage1` branch). Setup in `docs/setup.md`; status in `docs/feature-status.md`.
+Public website for NSD Business Academy Limited (Yola, Adamawa State; CAC RC 9902304). Next.js 16 (App Router, Cache Components) + TypeScript + Tailwind 4. **No database and no logins**: content lives in `src/content/`; enquiry forms email the office via FormSubmit (default) or Resend. Student/staff portals are a separate project — do not add auth, admin or database code here (the earlier platform is on the `platform-stage1` branch). Setup in `docs/setup.md`; status in `docs/feature-status.md`.
 
 ## Always do first
 
@@ -20,7 +20,7 @@ Public website for NSD Business Academy Limited (Yola, Adamawa State; CAC RC 990
 ## Architecture rules
 
 - Pages read content only through `src/server/public-data.ts`, which returns `published` entries from `src/content/`.
-- Enquiry forms: Zod validation, honeypot, signed timing token, rate limit, then `sendEmail()` to `ENQUIRY_TO`. Nothing is stored. In production the forms render only when Resend and `FORM_SECRET` are configured; otherwise the office phone/email are shown.
+- Enquiry forms: Zod validation, honeypot, signed timing token, rate limit, then `sendEmail()` to `ENQUIRY_TO` (server-side FormSubmit AJAX by default in production; Resend optional). Nothing is stored.
 - Money displayed via `src/lib/money.ts`; times shown as WAT via `src/lib/time.ts`.
 
 ## Testing

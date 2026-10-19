@@ -51,13 +51,15 @@ export function enquiryEmail(e: Enquiry, to: string) {
     ["Topics", e.topics],
     ["Area of interest", e.interest],
   ];
-  const details = rows.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n");
+  const filled = rows.filter(([, v]) => v);
+  const details = filled.map(([k, v]) => `${k}: ${v}`).join("\n");
   const about = e.subject || e.organisationName;
   return {
     to,
     replyTo: e.email,
     subject: `${ENQUIRY_LABELS[e.type]} from ${e.name}${about ? ` — ${about}` : ""}`.slice(0, 200),
     text: `${ENQUIRY_LABELS[e.type]} sent from the website.\n\n${details}\n\nMessage:\n${e.message}\n\nReply to this email to answer ${e.name} directly.`,
+    fields: { "Enquiry type": ENQUIRY_LABELS[e.type], ...Object.fromEntries(filled), Message: e.message },
   };
 }
 

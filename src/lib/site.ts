@@ -16,7 +16,9 @@ export const SITE = {
     "Unless a course page states otherwise, certificates issued by the academy confirm completion of an academy course. They are not accredited national qualifications.",
 } as const;
 
-export const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+export const siteUrl = () =>
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000");
 
 export const PILLAR_LABELS = {
   BUSINESS_ENTREPRENEURSHIP: "Business & entrepreneurship",

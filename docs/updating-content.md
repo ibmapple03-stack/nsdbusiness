@@ -26,4 +26,4 @@ All text on the website lives in plain files in `src/content/`. There is no admi
 
 ## Enquiry forms
 
-Messages from the contact, corporate-training and partnership forms are emailed to `ENQUIRY_TO` (info@nsdbusinessltd.com by default), with the visitor's address as Reply-To, so the office simply replies. Nothing is stored on the website. Until email sending is set up (see `deployment.md`), the forms show the office's phone and email instead.
+Messages from the contact, corporate-training and partnership forms are delivered by FormSubmit to `ENQUIRY_TO` (info@nsdbusinessltd.com by default), with the visitor's address as Reply-To, so the office simply replies. Nothing is stored on the website. FormSubmit needs a one-time activation (see `deployment.md`).

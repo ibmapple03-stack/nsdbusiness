@@ -65,4 +65,4 @@ Before publishing admissions or accepting payments, management approves: verifie
 |---|---|
 | ★ Vercel account | Hosting (no database needed) |
 | ★ Domain registrar access for `nsdbusinessltd.com` | Pointing the domain at Vercel; email DNS records |
-| Resend account + DNS records | Delivering enquiry-form messages to info@ |
+| (none) | Enquiry forms use FormSubmit; activate once from info@ |
