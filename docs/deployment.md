@@ -25,8 +25,7 @@ Every environment has its own `BETTER_AUTH_SECRET`, `IP_HASH_SALT` and database.
 
 1. Create the production database and copy its connection string (with `sslmode=require`).
 2. In Vercel, import the repository. Set the environment variables from `.env.example` (production values), including `NODE_ENV` defaults.
-3. Set the build command to `npm run build`. Run migrations as a release step:
-   `DATABASE_URL=… npx prisma migrate deploy`
+3. Leave Vercel's build command on its default. Vercel runs the `vercel-build` script, which generates the Prisma client, applies pending migrations (`prisma migrate deploy`) and then builds. The build reads the database, so `DATABASE_URL` must be set first.
 4. Create the first CEO account:
    `DATABASE_URL=… npm run admin:create -- "Full Name" ceo@your-domain`
 5. Seed the base content (10 draft courses, page text, draft policies, unpublished profiles; no accounts, no demo data):
