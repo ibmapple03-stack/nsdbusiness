@@ -1,66 +1,35 @@
-# Deployment, backup and restoration
+# Deployment
 
-**Status:** documented, not yet performed. A production deployment needs the accounts listed in `management-decisions.md`.
-
-## Target
-
-- **Vercel** for the Next.js application (HTTPS by default; all traffic encrypted in transit)
-- **Managed PostgreSQL** with daily backups and point-in-time recovery (e.g. Neon or Supabase), in the region closest to Nigeria that the provider offers
-- **Resend** (or SMTP) for email from a verified domain
-- Stage 2: S3-compatible private object storage (Cloudflare R2 or Supabase Storage), and Paystack
-
-## Environments
-
-| | Development | Preview (optional) | Production |
-|---|---|---|---|
-| Database | local `nsd_dev` | separate branch/database | production database |
-| Email | console | console or sandbox | Resend |
-| Paystack (Stage 2) | test keys | test keys | live keys |
-| Demo data | allowed | fictional only | **never** — the seed refuses to run |
-| MFA / draft preview | configurable | forced on / off | forced on / off |
-
-Every environment has its own `BETTER_AUTH_SECRET`, `IP_HASH_SALT` and database. Secrets are entered in Vercel's encrypted environment settings, never committed.
+**Hosting:** Vercel, connected to the GitHub repository `ibmapple03-stack/nsdbusiness`. Every push to `main` deploys automatically. No database is needed.
 
 ## First deployment
 
-1. Create the production database and copy its connection string (with `sslmode=require`).
-2. In Vercel, import the repository. Set the environment variables from `.env.example` (production values), including `NODE_ENV` defaults.
-3. Leave Vercel's build command on its default. Vercel runs the `vercel-build` script, which generates the Prisma client, applies pending migrations (`prisma migrate deploy`) and then builds. The build reads the database, so `DATABASE_URL` must be set first.
-4. Create the first CEO account:
-   `DATABASE_URL=… npm run admin:create -- "Full Name" ceo@your-domain`
-5. Seed the base content (10 draft courses, page text, draft policies, unpublished profiles; no accounts, no demo data):
-   `DATABASE_URL=… npm run db:seed:content`
-6. Point the domain's DNS at Vercel and set up email DNS records (SPF, DKIM, DMARC) for the sending domain.
-7. The CEO signs in, sets up two-step sign-in, creates the other staff accounts, verifies contact details, and approves content.
+1. In Vercel, import the repository. Leave the build settings on their defaults.
+2. Deploy. The site works with no environment variables; the enquiry forms show the office phone and email until step 3 is done.
+3. Connect the domain: Vercel → Settings → Domains → add `www.nsdbusinessltd.com` (and `nsdbusinessltd.com`, redirecting to www). Add the DNS records Vercel shows at the domain registrar.
 
-## Backups
+## Turning on the enquiry forms
 
-- **Automatic:** enable the managed provider's daily backups and point-in-time recovery (minimum 7 days; 30 recommended).
-- **Independent weekly copy:** a logical dump stored outside the database provider, encrypted:
-  ```bash
-  pg_dump --format=custom --no-owner "$PROD_DATABASE_URL" > nsd-$(date +%F).dump
-  gpg --symmetric --cipher-algo AES256 nsd-$(date +%F).dump   # passphrase held by the CEO and Coordinator
-  ```
-  Keep at least 8 weekly copies. Never store backups in the code repository or personal email.
-- **Uploaded files (Stage 2):** enable bucket versioning, plus a weekly sync to a second private bucket.
+1. Create a Resend account (resend.com), add the domain `nsdbusinessltd.com`, and add the DNS records it shows (SPF, DKIM; add a DMARC record too). Wait until Resend shows the domain as verified.
+2. Create a Resend API key with "sending access".
+3. In Vercel → Settings → Environment Variables, add:
 
-## Restore test (do this before launch, then every quarter)
+| Key | Value |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | `https://www.nsdbusinessltd.com` |
+| `EMAIL_DRIVER` | `resend` |
+| `RESEND_API_KEY` | the key from Resend |
+| `EMAIL_FROM` | `NSD Business Academy <no-reply@nsdbusinessltd.com>` |
+| `ENQUIRY_TO` | `info@nsdbusinessltd.com` |
+| `FORM_SECRET` | a random value: `openssl rand -base64 32` |
 
-1. Create an empty scratch database (never restore over production during a test).
-2. `gpg -d nsd-YYYY-MM-DD.dump.gpg > restore.dump`
-3. `pg_restore --no-owner --dbname "$SCRATCH_DATABASE_URL" restore.dump`
-4. Run `DATABASE_URL=$SCRATCH_DATABASE_URL npx prisma migrate status`. It should report that the database is up to date.
-5. Point a local copy of the app at the scratch database and check: sign in works; course count, published pages and the latest audit entries match production.
-6. Record the date, backup used, time taken and result in the document register. Delete the scratch database.
+4. Redeploy (Deployments → ⋯ → Redeploy), then send a test message from each form and confirm it arrives at info@.
 
-## Security checklist before go-live
+Never set `E2E_CONSOLE_EMAIL` on Vercel; it exists only for automated tests.
 
-- [ ] Every staff account has two-step sign-in enabled (see Users & access)
-- [ ] `CONTENT_PREVIEW` and demo seed are not used in production
-- [ ] No `.env` files or secrets in the repository (`git log -p | grep -i secret` is clean)
-- [ ] Policies approved after legal review and published
-- [ ] Contact details verified
-- [ ] Logo files in `public/brand/` re-exported from the original vector artwork (recommended)
-- [ ] Backup restore test completed and recorded
-- [ ] Content Security Policy tightened with nonces (Stage 4)
-- [ ] Dependency audit (`npm audit`) reviewed
+## Before go-live
+
+- [ ] Contact details, mailboxes and phone tested
+- [ ] Policies reviewed by a legal professional
+- [ ] Enquiry forms send to info@ (or are deliberately left as phone/email)
+- [ ] Logo replaced with the original vector export (recommended)

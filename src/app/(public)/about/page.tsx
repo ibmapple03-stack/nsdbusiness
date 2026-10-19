@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { DraftMarker, PageHeader } from "@/components/ui/misc";
+import { PageHeader } from "@/components/ui/misc";
 import { RichText, listItems } from "@/components/ui/rich-text";
 import { SITE } from "@/lib/site";
 import { getContentBlocks, getPublishedProfiles } from "@/server/public-data";
@@ -31,7 +31,6 @@ export default async function AboutPage() {
           <div className="grid gap-10 md:grid-cols-3">
             {statements.map((s) => (
               <div key={s!.title} className="border-t-2 border-navy-700 pt-5">
-                <DraftMarker show={s!.isDraft} label="Draft — awaiting approval" />
                 <h2 className="text-xl font-semibold">{s!.title}</h2>
                 <p className="mt-2 text-[1.0625rem] leading-relaxed text-muted">{s!.body}</p>
               </div>
@@ -43,7 +42,6 @@ export default async function AboutPage() {
       {values && (
         <section aria-labelledby="values-heading" className="bg-surface py-14">
           <div className="container-page">
-            <DraftMarker show={values.isDraft} label="Draft — awaiting approval" />
             <h2 id="values-heading" className="text-[1.75rem] font-bold tracking-[-0.02em]">
               {values.title}
             </h2>
@@ -71,7 +69,7 @@ export default async function AboutPage() {
           <div className="mt-8 space-y-12">
             {leadership.map((p) => (
               <article key={p.slug} className="grid gap-8 md:grid-cols-[14rem_1fr]">
-                <Portrait slug={p.slug} name={p.name} hasPhoto={!!p.photoPath} />
+                <Portrait name={p.name} photo={p.photo} />
                 <div>
                   <h3 className="text-2xl font-bold tracking-[-0.02em]">{p.name}</h3>
                   <p className="mt-1 font-display font-medium text-gold-700">{p.publicTitle}</p>
@@ -93,7 +91,7 @@ export default async function AboutPage() {
               {[...staff, ...instructors].map((p) => (
                 <li key={p.slug} className="flex gap-4">
                   <div className="w-20 shrink-0">
-                    <Portrait slug={p.slug} name={p.name} hasPhoto={!!p.photoPath} small />
+                    <Portrait name={p.name} photo={p.photo} small />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold">{p.name}</h3>
@@ -133,14 +131,14 @@ export default async function AboutPage() {
   );
 }
 
-function Portrait({ slug, name, hasPhoto, small = false }: { slug: string; name: string; hasPhoto: boolean; small?: boolean }) {
+function Portrait({ name, photo, small = false }: { name: string; photo: string | null; small?: boolean }) {
   const initials = name
     .replace(/^(Dr|Mr|Mrs|Ms)\.?\s+/i, "")
     .split(/\s+/)
     .slice(0, 2)
     .map((w) => w[0])
     .join("");
-  if (!hasPhoto) {
+  if (!photo) {
     return (
       <div role="img" aria-label={`Photo not yet available for ${name}`} className={`flex aspect-[4/5] w-full items-center justify-center rounded-[var(--radius-lg)] bg-navy-100 font-display font-bold text-navy-600 ${small ? "text-xl" : "text-4xl"}`}>
         {initials}
@@ -149,7 +147,7 @@ function Portrait({ slug, name, hasPhoto, small = false }: { slug: string; name:
   }
   return (
     <div className="relative aspect-[4/5] w-full max-w-56 overflow-hidden rounded-[var(--radius-lg)] bg-navy-100">
-      <Image src={`/media/profile/${slug}`} alt={`Portrait of ${name}`} fill sizes={small ? "5rem" : "14rem"} className="object-cover object-top" unoptimized />
+      <Image src={photo} alt={`Portrait of ${name}`} fill sizes={small ? "5rem" : "14rem"} className="object-cover object-top" />
     </div>
   );
 }

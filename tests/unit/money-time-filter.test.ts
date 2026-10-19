@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { formatNaira, koboToNairaInput, parseNairaToKobo } from "@/lib/money";
 import { formatDate, overlaps, parseDateInput, parseWATLocal, toWATLocalInput } from "@/lib/time";
 import { filterCourses, parseFilters } from "@/lib/course-filter";
-import { redact } from "@/server/audit";
-import { enquiryInput } from "@/server/validation";
+import { enquiryEmail, enquiryInput } from "@/server/enquiry";
+import { rateLimit } from "@/server/rate-limit";
 
 describe("money (kobo)", () => {
   it("parses naira input into integer kobo", () => {
@@ -56,14 +56,24 @@ describe("course filters", () => {
   });
 });
 
-describe("audit redaction", () => {
-  it("never copies personal or secret values into snapshots", () => {
-    const out = redact({ name: "A", email: "a@b.c", phone: "080", password: "x", nested: { token: "t", title: "ok" } }) as Record<string, unknown>;
-    expect(out.email).toBe("[redacted]");
-    expect(out.phone).toBe("[redacted]");
-    expect(out.password).toBe("[redacted]");
-    expect((out.nested as Record<string, unknown>).token).toBe("[redacted]");
-    expect((out.nested as Record<string, unknown>).title).toBe("ok");
+describe("enquiry email", () => {
+  it("goes to the office, with the visitor as Reply-To and only filled-in fields", () => {
+    const parsed = enquiryInput.parse({ type: "CONTACT", name: "Ada", email: "ADA@example.test", message: "Hello", consent: "on", subject: "Fees" });
+    const mail = enquiryEmail(parsed, "office@example.test");
+    expect(mail.to).toBe("office@example.test");
+    expect(mail.replyTo).toBe("ada@example.test");
+    expect(mail.subject).toBe("General enquiry from Ada — Fees");
+    expect(mail.text).toContain("Message:\nHello");
+    expect(mail.text).not.toContain("Organisation:");
+  });
+});
+
+describe("rate limit", () => {
+  it("allows the limit within a window, then blocks until it resets", () => {
+    const t = 1_000_000;
+    for (let i = 0; i < 3; i++) expect(rateLimit("k", 3, 60, t)).toBe(true);
+    expect(rateLimit("k", 3, 60, t + 1000)).toBe(false);
+    expect(rateLimit("k", 3, 60, t + 61_000)).toBe(true);
   });
 });
 

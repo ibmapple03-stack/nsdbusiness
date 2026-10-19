@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { StageBadge } from "@/components/ui/badge";
-import { DraftMarker } from "@/components/ui/misc";
 import { RichText, listItems } from "@/components/ui/rich-text";
 import { CourseRow } from "@/components/site/course-row";
 import { FORMAT_DESCRIPTIONS, FORMAT_LABELS, SITE } from "@/lib/site";
@@ -18,7 +17,7 @@ import {
   getVerifiedContact,
   deriveStage,
 } from "@/server/public-data";
-import type { DeliveryFormat } from "@/generated/prisma/enums";
+import type { DeliveryFormat } from "@/content/types";
 
 export default async function HomePage() {
   const [blocks, courses, cohorts, profiles, news, contact] = await Promise.all([
@@ -44,7 +43,6 @@ export default async function HomePage() {
         <section aria-labelledby="intro-heading" className="container-page grid gap-10 py-16 lg:grid-cols-[1.3fr_1fr] lg:gap-16 lg:py-20">
           {intro && (
             <div>
-              <DraftMarker show={intro.isDraft} />
               <h2 id="intro-heading" className="text-[clamp(1.75rem,3.5vw,2.375rem)] font-bold tracking-[-0.03em]">
                 {intro.title}
               </h2>
@@ -53,7 +51,6 @@ export default async function HomePage() {
           )}
           {audience && (
             <div className="lg:pt-2">
-              <DraftMarker show={audience.isDraft} />
               <h2 className="text-xl font-semibold">{audience.title}</h2>
               <ul className="mt-4 divide-y divide-line border-y border-line">
                 {listItems(audience.body).map((item) => (
@@ -114,7 +111,7 @@ export default async function HomePage() {
       {founder && (
         <section aria-labelledby="founder-heading" className="bg-navy-950 text-navy-100">
           <div className="container-page grid items-center gap-10 py-16 md:grid-cols-[minmax(0,14rem)_1fr] lg:py-20">
-            <FounderPortrait slug={founder.slug} hasPhoto={!!founder.photoPath} name={founder.name} />
+            <FounderPortrait photo={founder.photo} name={founder.name} />
             <div>
               <h2 id="founder-heading" className="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-[-0.03em] text-white">
                 {founder.name}
@@ -209,9 +206,6 @@ function Hero({ cohorts }: { cohorts: Awaited<ReturnType<typeof getUpcomingCohor
             <ButtonLink href="/admissions" size="lg" className="border border-white/30 bg-transparent shadow-none hover:bg-white/10">
               Apply
             </ButtonLink>
-            <Link href="/login" className="px-2 py-3 font-display font-semibold text-navy-100 underline decoration-white/30 underline-offset-4 hover:text-white hover:decoration-gold-500">
-              Student login
-            </Link>
           </div>
         </div>
 
@@ -276,11 +270,11 @@ async function Outcomes({ courses }: { courses: { slug: string }[] }) {
   );
 }
 
-function FounderPortrait({ slug, hasPhoto, name }: { slug: string; hasPhoto: boolean; name: string }) {
-  if (!hasPhoto) return <AvatarPlaceholder name={name} />;
+function FounderPortrait({ photo, name }: { photo: string | null; name: string }) {
+  if (!photo) return <AvatarPlaceholder name={name} />;
   return (
     <div className="relative aspect-[4/5] w-40 overflow-hidden rounded-[var(--radius-lg)] ring-1 ring-white/15 md:w-full">
-      <Image src={`/media/profile/${slug}`} alt={`Portrait of ${name}`} fill sizes="(min-width: 768px) 14rem, 10rem" className="object-cover object-top" unoptimized />
+      <Image src={photo} alt={`Portrait of ${name}`} fill sizes="(min-width: 768px) 14rem, 10rem" className="object-cover object-top" />
     </div>
   );
 }

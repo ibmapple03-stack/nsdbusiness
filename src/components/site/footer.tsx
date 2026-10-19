@@ -39,7 +39,6 @@ export async function SiteFooter() {
           <ul className="mt-3 space-y-2 text-[0.9375rem]">
             <li><Link className={link} href="/about">About us</Link></li>
             <li><Link className={link} href="/contact">Contact</Link></li>
-            <li><Link className={link} href="/login">Staff and student login</Link></li>
           </ul>
         </div>
 

@@ -3,15 +3,20 @@ import { connection } from "next/server";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { CheckboxField, SelectField, TextArea, TextField } from "@/components/ui/field";
 import { submitEnquiry } from "@/app/actions/enquiry";
+import { CONTACT } from "@/content/contact";
+import type { EnquiryType } from "@/server/enquiry";
+import { env } from "@/server/env";
 import { issueFormToken } from "@/server/form-token";
-import type { EnquiryType } from "@/generated/prisma/enums";
 
 /**
  * One accessible enquiry form used for contact, corporate training and
- * partnership enquiries. Rendered per request so its timing token is fresh.
+ * partnership enquiries; each message is emailed to the academy office.
+ * Rendered per request so its timing token is fresh. Until email sending is
+ * configured, the office's phone and email are shown instead.
  */
 export async function EnquiryForm({ type, submitLabel = "Send message" }: { type: EnquiryType; submitLabel?: string }) {
   await connection();
+  if (!env.formsEnabled) return <DirectContact />;
   const token = issueFormToken();
 
   return (
@@ -73,5 +78,30 @@ export async function EnquiryForm({ type, submitLabel = "Send message" }: { type
 
       <SubmitButton pendingLabel="Sending…">{submitLabel}</SubmitButton>
     </ActionForm>
+  );
+}
+
+function DirectContact() {
+  const link = "font-medium text-navy-800 underline decoration-navy-200 underline-offset-4 hover:decoration-gold-500";
+  return (
+    <div className="space-y-3 text-[1.0625rem]">
+      <p className="text-muted">Contact the academy office directly and we will get back to you.</p>
+      {CONTACT.email && (
+        <p>
+          Email{" "}
+          <a href={`mailto:${CONTACT.email}`} className={link}>
+            {CONTACT.email}
+          </a>
+        </p>
+      )}
+      {CONTACT.phone && (
+        <p>
+          Call{" "}
+          <a href={`tel:${CONTACT.phone.replace(/\s/g, "")}`} className={link}>
+            {CONTACT.phone}
+          </a>
+        </p>
+      )}
+    </div>
   );
 }

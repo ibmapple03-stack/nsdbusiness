@@ -12,16 +12,6 @@ export function EmptyState({ title, children, action }: { title: string; childre
 }
 
 /** Visible marker for unapproved text shown only in local preview mode. */
-export function DraftMarker({ show, label = "Draft — not yet approved for publication" }: { show: boolean; label?: string }) {
-  if (!show) return null;
-  return (
-    <span className="mb-2 inline-flex items-center gap-1.5 rounded-sm border border-dashed border-gold-500 bg-gold-100 px-2 py-0.5 text-xs font-medium text-gold-700">
-      <span aria-hidden>●</span>
-      {label}
-    </span>
-  );
-}
-
 export function Breadcrumb({ items }: { items: { href?: string; label: string }[] }) {
   return (
     <nav aria-label="Breadcrumb" className="text-sm text-muted">

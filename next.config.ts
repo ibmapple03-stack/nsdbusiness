@@ -29,10 +29,6 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
-  experimental: {
-    // Enables forbidden() / unauthorized() for permission errors.
-    authInterrupts: true,
-  },
   turbopack: {
     rules: {
       "*.css": {

@@ -3,17 +3,20 @@ import { z } from "zod";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+/**
+ * Every setting is optional, so the site builds and runs with none at all.
+ * Without email settings the enquiry forms are replaced by the office's
+ * phone number and email address.
+ */
 const schema = z.object({
-  DATABASE_URL: z.string().url(),
-  BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
-  BETTER_AUTH_URL: z.string().url(),
-  NEXT_PUBLIC_SITE_URL: z.string().url(),
-  IP_HASH_SALT: z.string().min(16),
+  FORM_SECRET: z.string().min(16, "FORM_SECRET must be at least 16 characters").optional(),
   EMAIL_DRIVER: z.enum(["console", "resend"]).default("console"),
-  EMAIL_FROM: z.string().min(3),
+  EMAIL_FROM: z.string().min(3).default("NSD Business Academy <no-reply@nsdbusinessltd.com>"),
   RESEND_API_KEY: z.string().optional(),
-  REQUIRE_STAFF_MFA: z.enum(["true", "false"]).default("true"),
-  CONTENT_PREVIEW: z.enum(["true", "false"]).default("false"),
+  /** Where enquiry form messages are delivered. */
+  ENQUIRY_TO: z.string().email().default("info@nsdbusinessltd.com"),
+  /** Automated tests only: lets a production build print emails to the console. Never set this on Vercel. */
+  E2E_CONSOLE_EMAIL: z.enum(["true", "false"]).default("false"),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -22,10 +25,14 @@ if (!parsed.success) {
   throw new Error(`Invalid environment configuration:\n${issues}\nSee .env.example.`);
 }
 
+const data = parsed.data;
+
 export const env = {
-  ...parsed.data,
+  ...data,
   isProduction,
-  // MFA for staff and draft previews can only be relaxed outside production.
-  requireStaffMfa: isProduction || parsed.data.REQUIRE_STAFF_MFA === "true",
-  contentPreview: !isProduction && parsed.data.CONTENT_PREVIEW === "true",
+  /** Development may print emails to the console; production needs Resend and a form secret. */
+  formsEnabled:
+    !isProduction ||
+    (!!data.FORM_SECRET && (data.E2E_CONSOLE_EMAIL === "true" ? data.EMAIL_DRIVER === "console" : data.EMAIL_DRIVER === "resend" && !!data.RESEND_API_KEY)),
+  formSecret: data.FORM_SECRET ?? (isProduction ? "" : "development-only-form-secret"),
 };

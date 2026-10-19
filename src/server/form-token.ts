@@ -1,5 +1,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { env } from "@/server/env";
 
 /**
  * Signed timestamp embedded in public forms. Lets the server reject posts
@@ -7,7 +8,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  * Not exported through any server action, so it cannot be minted by clients.
  */
 function sign(ts: string) {
-  return createHmac("sha256", process.env.BETTER_AUTH_SECRET ?? "").update(`form:${ts}`).digest("base64url");
+  return createHmac("sha256", env.formSecret).update(`form:${ts}`).digest("base64url");
 }
 
 export function issueFormToken(now = Date.now()): string {

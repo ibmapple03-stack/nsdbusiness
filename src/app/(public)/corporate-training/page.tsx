@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { EnquiryForm } from "@/components/site/enquiry-form";
-import { DraftMarker, FormSkeleton, PageHeader } from "@/components/ui/misc";
+import { FormSkeleton, PageHeader } from "@/components/ui/misc";
 import { RichText } from "@/components/ui/rich-text";
 import { getContentBlocks } from "@/server/public-data";
 
@@ -23,7 +23,6 @@ export default async function CorporatePage() {
       <div className="container-page grid gap-16 py-12 lg:grid-cols-2 lg:gap-12 lg:py-16">
         <section aria-labelledby="corporate-heading" className="space-y-6">
           <div>
-            {corporate && <DraftMarker show={corporate.isDraft} />}
             <h2 id="corporate-heading" className="text-[1.75rem] font-bold tracking-[-0.02em]">
               {corporate?.title ?? "Training for your organisation"}
             </h2>
@@ -39,7 +38,6 @@ export default async function CorporatePage() {
 
         <section aria-labelledby="partnership-heading" className="space-y-6">
           <div>
-            {partnership && <DraftMarker show={partnership.isDraft} />}
             <h2 id="partnership-heading" className="text-[1.75rem] font-bold tracking-[-0.02em]">
               {partnership?.title ?? "Partner with the academy"}
             </h2>

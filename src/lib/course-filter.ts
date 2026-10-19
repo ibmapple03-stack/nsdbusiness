@@ -1,4 +1,4 @@
-import type { DeliveryFormat, Pillar } from "@/generated/prisma/enums";
+import type { DeliveryFormat, Pillar } from "@/content/types";
 
 export type FilterableCourse = {
   title: string;

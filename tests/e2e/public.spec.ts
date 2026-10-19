@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-const PAGES = ["/", "/courses", "/courses/entrepreneurship-small-business", "/about", "/admissions", "/corporate-training", "/news", "/contact", "/policies", "/login"];
+const PAGES = ["/", "/courses", "/courses/entrepreneurship-small-business", "/about", "/admissions", "/corporate-training", "/news", "/news/academy-incorporated", "/contact", "/policies", "/policies/privacy"];
 
 test.describe("public pages", () => {
   for (const path of PAGES) {
@@ -17,31 +17,23 @@ test.describe("public pages", () => {
     });
   }
 
-  test("unpublished content is not publicly reachable", async ({ page, request }) => {
-    // Seeded as a draft course and draft policy. With Partial Prefetching, Next.js
-    // serves the not-found page (noindex) for slugs it did not prerender; what
-    // matters is that no draft content reaches the browser.
+  test("unpublished content and removed login pages are not reachable", async ({ page, request }) => {
+    // With Partial Prefetching, Next.js serves the not-found page (noindex) for
+    // slugs it did not prerender; what matters is that no draft content is sent.
     const course = await (await request.get("/courses/business-management")).text();
     expect(course).not.toContain("Core management skills");
     expect(course).toContain('name="robots" content="noindex"');
-    const policy = await (await request.get("/policies/privacy")).text();
-    expect(policy).not.toContain("What we collect");
-    expect(policy).toContain('name="robots" content="noindex"');
-    // Profiles that are not published (and photos not approved) are not served.
-    expect((await request.get("/media/profile/muktar-buba")).status()).toBe(404);
-    // No draft markers leak onto the production home page.
-    await page.goto("/");
-    await expect(page.getByText(/not yet approved/i)).toHaveCount(0);
-    await expect(page.getByText(/Development preview/i)).toHaveCount(0);
-  });
-
-  test("staff area redirects visitors to sign in", async ({ page }) => {
-    await page.goto("/admin");
-    await expect(page).toHaveURL(/\/login$/);
+    for (const path of ["/login", "/admin"]) {
+      expect(await (await request.get(path)).text()).toContain('name="robots" content="noindex"');
+    }
+    // Unpublished people are never named; there are no login links.
+    await page.goto("/about");
+    await expect(page.getByText("Muktar Buba")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /log ?in|sign in/i })).toHaveCount(0);
   });
 
   test("course filters work through the URL", async ({ page }) => {
-    await page.goto("/courses?status=OPEN");
+    await page.goto("/courses?status=PROPOSED");
     const rows = page.locator("main ul > li h3");
     await expect(rows).toHaveCount(1);
     await expect(rows.first()).toHaveText(/Entrepreneurship/);
@@ -82,6 +74,6 @@ test.describe("enquiry form", () => {
     await page.getByLabel("Your message").fill("When does the next bookkeeping course start?");
     await page.getByLabel(/I agree that NSD Business Academy/).check();
     await page.getByRole("button", { name: "Send message" }).click();
-    await expect(page.getByText(/Your message has been received/)).toBeVisible();
+    await expect(page.getByText(/Your message has been sent to the academy office/)).toBeVisible();
   });
 });

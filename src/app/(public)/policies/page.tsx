@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { getPolicies } from "@/server/public-data";
 
@@ -26,7 +25,6 @@ export default async function PoliciesPage() {
                       {p.title}
                     </Link>
                   </h2>
-                  {p.isDraft && <Badge tone="attention">Draft — pending review</Badge>}
                 </div>
                 {p.summary && <p className="mt-1 text-muted">{p.summary}</p>}
               </li>

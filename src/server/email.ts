@@ -1,15 +1,15 @@
 import "server-only";
 import { env } from "@/server/env";
 
-export type EmailMessage = { to: string; subject: string; text: string };
+export type EmailMessage = { to: string; subject: string; text: string; replyTo?: string };
 
 /**
  * Email adapter. Development prints messages to the server console.
- * Production uses Resend once RESEND_API_KEY and a verified sending domain exist.
+ * Production uses Resend (RESEND_API_KEY, and a verified sending domain).
  */
 export async function sendEmail(message: EmailMessage): Promise<void> {
   if (env.EMAIL_DRIVER === "console") {
-    console.info(`\n── email (dev) ──\nTo: ${message.to}\nSubject: ${message.subject}\n\n${message.text}\n─────────────────\n`);
+    console.info(`\n── email (dev) ──\nTo: ${message.to}\nReply-To: ${message.replyTo ?? "-"}\nSubject: ${message.subject}\n\n${message.text}\n─────────────────\n`);
     return;
   }
 
@@ -17,7 +17,13 @@ export async function sendEmail(message: EmailMessage): Promise<void> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env.EMAIL_FROM, to: [message.to], subject: message.subject, text: message.text }),
+    body: JSON.stringify({
+      from: env.EMAIL_FROM,
+      to: [message.to],
+      subject: message.subject,
+      text: message.text,
+      ...(message.replyTo ? { reply_to: message.replyTo } : {}),
+    }),
   });
   if (!res.ok) throw new Error(`Email provider rejected the message (HTTP ${res.status})`);
 }

@@ -39,9 +39,6 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Link href="/login" className={navLink}>
-            Student login
-          </Link>
           <ButtonLink href="/admissions" size="sm">
             Apply
           </ButtonLink>
@@ -64,10 +61,7 @@ export function SiteHeader() {
                   </Link>
                 </li>
               ))}
-              <li className="mt-3 grid grid-cols-2 gap-3 border-t border-line pt-4">
-                <ButtonLink href="/login" variant="secondary">
-                  Student login
-                </ButtonLink>
+              <li className="mt-3 grid border-t border-line pt-4">
                 <ButtonLink href="/admissions">Apply</ButtonLink>
               </li>
             </ul>

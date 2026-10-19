@@ -1,23 +1,23 @@
 # Decisions and credentials still required
 
-Updated 19 October 2026, after management supplied the website content and launch information. Nothing in this list is published or assumed until management supplies it. Items marked ★ block launch.
+Updated 19 October 2026. The project is now the public website only; portal decisions (accounts, payments, approvals) move to the separate portal project. Nothing in this list is published or assumed until management supplies it. Items marked ★ block launch.
 
 ## Supplied on 19 October 2026 (now in the site)
 
 - Office address, telephone (+234 803 758 8888) and general enquiries email (info@nsdbusinessltd.com), shown on the Contact page, footer and home page.
-- Domain: `www.nsdbusinessltd.com`. Admin email `admin@nsdbusinessltd.com` is the privacy, complaints and refunds contact in the policies. CEO login: `drnasidi@nsdbusinessltd.com`.
+- Domain: `www.nsdbusinessltd.com`. Admin email `admin@nsdbusinessltd.com` is the privacy, complaints and refunds contact in the policies. CEO login `drnasidi@nsdbusinessltd.com` is for the future portal project.
 - First course: *Practical Entrepreneurship and Small Business Management*, published as a **proposed** course with no dates (enrolment is not open).
 - Policy content for all five policies; no [bracketed] placeholders remain. Learners must be 18 or over.
 - Admissions requirements for the introductory course.
-- Founder biography (updated wording) and photo approved. Muktar Buba's biography entered (profile unpublished until his title is confirmed).
+- Founder biography (updated wording) and photo approved and shown. Muktar Buba's biography entered (not shown until his title is confirmed).
 - Incorporation announcement (dated 30 September 2026) on News & Events.
-- Certificate wording for course 1, for Stage 4 certificates:
+- Certificate wording for course 1 (for certificates issued later):
   > "NSD Business Academy Limited certifies that [Learner Name] successfully completed Practical Entrepreneurship and Small Business Management, comprising 24 instructor-led hours and practical assessments, from [Start Date] to [End Date]."
   > With certificate number, issue date and authorised signatures. Must not imply NBTE accreditation or a nationally recognised qualification.
 
 ## Still to confirm before launch
 
-- ★ **Test every contact:** the website, all three mailboxes (info@, admin@, drnasidi@) and the telephone number. The CEO account invitation is sent only after the drnasidi@ mailbox is confirmed working.
+- ★ **Test every contact:** the website, all three mailboxes (info@, admin@, drnasidi@) and the telephone number.
 - ★ **Map pin:** Muktar to supply the exact Google Maps pin at the office entrance (not the hospital's location).
 - **Office hours:** Monday–Friday, 8:00 a.m.–5:00 p.m. is entered but hidden until management confirms it.
 - **WhatsApp:** confirm availability before a WhatsApp button is added.
@@ -30,7 +30,7 @@ Publish dates and open applications only after management approves the course **
 - Start date (none is published until set).
 - Teaching venue (separate from the administrative office).
 - Final fee. ₦30,000 per participant is shown as *proposed*, with two instalments of ₦15,000 (after admission, and before Week 3), subject to a completed course costing.
-- Online checkout is enabled only after payment verification and reconciliation have been tested (Stage 2).
+- Applications and online payment belong to the separate portal project.
 
 ## People
 
@@ -54,22 +54,15 @@ Publish dates and open applications only after management approves the course **
 ## Decisions
 
 - Guardian and safeguarding process, before any learner under 18 is admitted (currently 18+ only).
-- Approval limits: should the Coordinator's fee and refund approvals have an upper limit above which the CEO must approve?
-- Should the Coordinator also be able to approve policies (currently CEO only)?
-- Working hours and leave rules for the staff attendance module (Stage 3).
 
 ## Launch check (from management)
 
 Before publishing admissions or accepting payments, management approves: verified contacts and map pin; first course budget, instructor, venue, dates and fee; enrolment, refund and privacy policies; secure student and staff access; tested payment confirmation and receipts; accurate certificate wording; approved public team profiles and brand assets.
 
-## Accounts and credentials (owned by the academy, never by a developer)
+## Accounts (owned by the academy, never by a developer)
 
-| Item | Needed for | Stage |
-|---|---|---|
-| ★ Vercel account (team owned by the academy) | Hosting | Launch |
-| ★ Managed PostgreSQL account | Database + backups | Launch |
-| ★ Domain registrar access for `nsdbusinessltd.com` | DNS | Launch |
-| ★ Email sending service (Resend or SMTP) + DNS records | Password and notification emails | Launch |
-| Paystack business account: test keys, then live keys after verification | Payments | 2 |
-| Private object storage (Cloudflare R2 / Supabase Storage) | Application documents | 2 |
-| WhatsApp Business Platform (official API) | Notifications — only after approval and recipient opt-in | 4 |
+| Item | Needed for |
+|---|---|
+| ★ Vercel account | Hosting (no database needed) |
+| ★ Domain registrar access for `nsdbusinessltd.com` | Pointing the domain at Vercel; email DNS records |
+| Resend account + DNS records | Delivering enquiry-form messages to info@ |

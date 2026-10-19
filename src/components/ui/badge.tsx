@@ -1,5 +1,3 @@
-import type { ContentStatus } from "@/generated/prisma/enums";
-import { STATUS_LABELS } from "@/server/workflow";
 import type { PublicStage } from "@/server/public-data";
 
 type Tone = "neutral" | "positive" | "attention" | "info" | "negative" | "muted";
@@ -15,19 +13,6 @@ const tones: Record<Tone, string> = {
 
 export function Badge({ tone = "neutral", children }: { tone?: Tone; children: React.ReactNode }) {
   return <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[0.8125rem] font-medium leading-6 ${tones[tone]}`}>{children}</span>;
-}
-
-const STATUS_TONE: Record<ContentStatus, Tone> = {
-  DRAFT: "muted",
-  SUBMITTED: "attention",
-  APPROVED: "info",
-  REJECTED: "negative",
-  PUBLISHED: "positive",
-  ARCHIVED: "muted",
-};
-
-export function StatusBadge({ status }: { status: ContentStatus }) {
-  return <Badge tone={STATUS_TONE[status]}>{STATUS_LABELS[status]}</Badge>;
 }
 
 const STAGE_TONE: Record<PublicStage, Tone> = {
