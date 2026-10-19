@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NSD Business Academy — website and academy platform
 
-## Getting Started
+Public website and administration platform for **NSD Business Academy Limited**, Yola, Adamawa State, Nigeria (CAC RC 9902304).
 
-First, run the development server:
+**Current stage: 1 of 4 — design and foundation.** The public website, course catalogue, editable content with approvals, staff sign-in with two-step verification, and the permission system are all working. Admissions and payments come in Stage 2. See [`docs/feature-status.md`](docs/feature-status.md).
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env      # then fill in the values (see docs/setup.md)
+npm install
+npm run db:migrate
+npm run db:seed
+npm run dev               # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Documentation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Document | Contents |
+|---|---|
+| [docs/setup.md](docs/setup.md) | Local setup, demo accounts, tests |
+| [docs/feature-status.md](docs/feature-status.md) | Working / demo / pending features and known limitations |
+| [docs/management-decisions.md](docs/management-decisions.md) | Decisions and credentials needed from management |
+| [docs/roles-and-permissions.md](docs/roles-and-permissions.md) | Role and permission matrix, how access is enforced |
+| [docs/sitemap.md](docs/sitemap.md) | Public and admin pages |
+| [docs/data-model.md](docs/data-model.md) | Database design for all four stages |
+| [docs/payments-architecture.md](docs/payments-architecture.md) | Paystack integration and webhook design (Stage 2) |
+| [docs/operating-guide.md](docs/operating-guide.md) | How staff use the administration area |
+| [docs/deployment.md](docs/deployment.md) | Deployment, backups and restore testing |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Stack
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16 (App Router, Cache Components) · TypeScript · Tailwind CSS 4 · PostgreSQL + Prisma 7 · Better Auth (email/password + TOTP) · Zod · Vitest · Playwright + axe.

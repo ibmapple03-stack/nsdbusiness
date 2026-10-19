@@ -1,0 +1,523 @@
+// NSD Business Academy — database schema (Stage 1)
+// Money is stored as integer kobo (NGN minor units). Timestamps are UTC.
+// Better Auth tables (User, Session, Account, Verification, TwoFactor) are
+// maintained with `npx auth@latest generate` — keep their field names intact.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────── Organisation & access ─────────────────────────
+
+/// One row per organisation. The academy is the only organisation this
+/// platform serves; the table exists so that records of other organisations
+/// sharing staff (e.g. SABFI) are never mixed in by default.
+model Organisation {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  memberships   Membership[]
+  courses       Course[]
+  cohorts       Cohort[]
+  venues        Venue[]
+  staffProfiles StaffProfile[]
+  contentBlocks ContentBlock[]
+  policies      Policy[]
+  newsPosts     NewsPost[]
+  events        Event[]
+  enquiries     Enquiry[]
+  siteSettings  SiteSetting[]
+  auditLogs     AuditLog[]
+}
+
+enum Role {
+  CEO
+  OPERATIONS_COORDINATOR
+  ACADEMY_MANAGER
+  SECRETARY_ADMIN
+  FINANCE_OFFICER
+  INSTRUCTOR
+  STUDENT
+  GUARDIAN
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organisationId String
+  role           Role
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organisationId, role])
+  @@index([organisationId, role])
+}
+
+// ───────────────────────── Shared workflow ─────────────────────────
+
+/// Editorial workflow shared by every publishable record.
+enum ContentStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PUBLISHED
+  ARCHIVED
+}
+
+// ───────────────────────── People ─────────────────────────
+
+enum ProfileKind {
+  LEADERSHIP
+  STAFF
+  INSTRUCTOR
+}
+
+model StaffProfile {
+  id             String        @id @default(cuid())
+  organisationId String
+  slug           String
+  kind           ProfileKind
+  name           String
+  publicTitle    String
+  bio            String        @default("")
+  /// Internal-only note, e.g. "title subject to confirmation". Never rendered publicly.
+  internalNote   String        @default("")
+  photoPath      String?
+  /// A photo is shown publicly only when this is true and the profile is published.
+  photoApproved  Boolean       @default(false)
+  sortOrder      Int           @default(100)
+  reportsToId    String?
+  userId         String?       @unique
+  status         ContentStatus @default(DRAFT)
+  submittedById  String?
+  submittedAt    DateTime?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  reviewNote     String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  reportsTo    StaffProfile?   @relation("ReportingLine", fields: [reportsToId], references: [id], onDelete: SetNull)
+  reports      StaffProfile[]  @relation("ReportingLine")
+  user         User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  cohorts      Cohort[]
+  sessions     CohortSession[]
+
+  @@unique([organisationId, slug])
+}
+
+// ───────────────────────── Courses & cohorts ─────────────────────────
+
+/// Subject areas follow the academy's five service pillars.
+enum Pillar {
+  BUSINESS_ENTREPRENEURSHIP
+  DIGITAL_SKILLS
+  PROFESSIONAL_DEVELOPMENT
+  VOCATIONAL_SKILLS
+  BUSINESS_SUPPORT
+}
+
+enum DeliveryFormat {
+  CLASSROOM
+  ONLINE
+  BLENDED
+  OUTREACH
+}
+
+/// Reusable course definition. Scheduled runs live in Cohort.
+model Course {
+  id                     String           @id @default(cuid())
+  organisationId         String
+  slug                   String
+  title                  String
+  pillar                 Pillar
+  summary                String           @default("")
+  description            String           @default("")
+  targetAudience         String           @default("")
+  outcomes               String[]
+  prerequisites          String[]
+  /// [{ title: string, topics: string[] }]
+  curriculum             Json             @default("[]")
+  durationLabel          String           @default("")
+  durationWeeks          Int?
+  deliveryFormats        DeliveryFormat[]
+  assessment             String           @default("")
+  completionRequirements String           @default("")
+  certificateType        String           @default("")
+  refundTerms            String           @default("")
+  status                 ContentStatus    @default(DRAFT)
+  submittedById          String?
+  submittedAt            DateTime?
+  reviewedById           String?
+  reviewedAt             DateTime?
+  reviewNote             String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  cohorts      Cohort[]
+
+  @@unique([organisationId, slug])
+  @@index([organisationId, status])
+}
+
+enum CohortStatus {
+  PLANNED
+  OPEN
+  RUNNING
+  COMPLETED
+  CANCELLED
+}
+
+/// A scheduled run of a course.
+model Cohort {
+  id                  String         @id @default(cuid())
+  organisationId      String
+  courseId            String
+  code                String
+  startDate           DateTime       @db.Date
+  endDate             DateTime       @db.Date
+  applicationDeadline DateTime?      @db.Date
+  timetableSummary    String         @default("")
+  deliveryFormat      DeliveryFormat
+  venueId             String?
+  instructorId        String?
+  capacity            Int
+  /// Live fee, set only through the fee-approval workflow.
+  feeKobo             Int?
+  /// Proposed fee awaiting approval by a different, authorised person.
+  proposedFeeKobo     Int?
+  feeProposedById     String?
+  feeProposedAt       DateTime?
+  feeProposalReason   String?
+  paymentOptions      String         @default("")
+  instalmentsAllowed  Boolean        @default(false)
+  cohortStatus        CohortStatus   @default(PLANNED)
+  status              ContentStatus  @default(DRAFT)
+  submittedById       String?
+  submittedAt         DateTime?
+  reviewedById        String?
+  reviewedAt          DateTime?
+  reviewNote          String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  course       Course          @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  venue        Venue?          @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  instructor   StaffProfile?   @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+  sessions     CohortSession[]
+
+  @@unique([organisationId, code])
+  @@index([courseId])
+}
+
+/// One timetabled class meeting. Used for venue / instructor conflict checks.
+model CohortSession {
+  id           String        @id @default(cuid())
+  cohortId     String
+  startsAt     DateTime
+  endsAt       DateTime
+  venueId      String?
+  instructorId String?
+  note         String        @default("")
+  cohort       Cohort        @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  venue        Venue?        @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  instructor   StaffProfile? @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+
+  @@index([venueId, startsAt])
+  @@index([instructorId, startsAt])
+}
+
+model Venue {
+  id             String          @id @default(cuid())
+  organisationId String
+  name           String
+  address        String          @default("")
+  capacity       Int?
+  notes          String          @default("")
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  organisation   Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  cohorts        Cohort[]
+  sessions       CohortSession[]
+}
+
+// ───────────────────────── Public content ─────────────────────────
+
+/// Editable blocks of public copy (home intro, mission, admissions steps…).
+model ContentBlock {
+  id             String        @id @default(cuid())
+  organisationId String
+  key            String
+  title          String
+  body           String        @default("")
+  /// Where this block appears, for editors.
+  location       String        @default("")
+  status         ContentStatus @default(DRAFT)
+  submittedById  String?
+  submittedAt    DateTime?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  reviewNote     String?
+  updatedAt      DateTime      @updatedAt
+  organisation   Organisation  @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, key])
+}
+
+model Policy {
+  id             String        @id @default(cuid())
+  organisationId String
+  slug           String
+  title          String
+  version        Int           @default(1)
+  summary        String        @default("")
+  body           String        @default("")
+  status         ContentStatus @default(DRAFT)
+  effectiveFrom  DateTime?
+  submittedById  String?
+  submittedAt    DateTime?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  reviewNote     String?
+  updatedAt      DateTime      @updatedAt
+  organisation   Organisation  @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, slug, version])
+}
+
+enum NewsKind {
+  ANNOUNCEMENT
+  UPDATE
+  GUIDE
+}
+
+model NewsPost {
+  id             String        @id @default(cuid())
+  organisationId String
+  slug           String
+  kind           NewsKind      @default(ANNOUNCEMENT)
+  title          String
+  summary        String        @default("")
+  body           String        @default("")
+  publishedAt    DateTime?
+  status         ContentStatus @default(DRAFT)
+  submittedById  String?
+  submittedAt    DateTime?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  reviewNote     String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organisation   Organisation  @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, slug])
+}
+
+model Event {
+  id             String        @id @default(cuid())
+  organisationId String
+  slug           String
+  title          String
+  description    String        @default("")
+  startsAt       DateTime
+  endsAt         DateTime?
+  location       String        @default("")
+  status         ContentStatus @default(DRAFT)
+  submittedById  String?
+  submittedAt    DateTime?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  reviewNote     String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organisation   Organisation  @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, slug])
+}
+
+/// Contact details and other site-wide values. Only verified values are public.
+model SiteSetting {
+  id             String       @id @default(cuid())
+  organisationId String
+  key            String
+  label          String
+  value          String       @default("")
+  verified       Boolean      @default(false)
+  verifiedById   String?
+  verifiedAt     DateTime?
+  updatedAt      DateTime     @updatedAt
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, key])
+}
+
+// ───────────────────────── Enquiries ─────────────────────────
+
+enum EnquiryType {
+  CONTACT
+  CORPORATE_TRAINING
+  PARTNERSHIP
+}
+
+enum EnquiryStatus {
+  NEW
+  IN_PROGRESS
+  CLOSED
+}
+
+model Enquiry {
+  id               String        @id @default(cuid())
+  organisationId   String
+  type             EnquiryType
+  name             String
+  email            String
+  phone            String?
+  organisationName String?
+  subject          String        @default("")
+  message          String
+  /// Type-specific answers (e.g. headcount, preferred dates).
+  details          Json          @default("{}")
+  status           EnquiryStatus @default(NEW)
+  assignedToId     String?
+  handledNote      String        @default("")
+  /// Salted hash only — raw IPs are not stored.
+  ipHash           String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  organisation     Organisation  @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, status, createdAt])
+}
+
+// ───────────────────────── Audit & safety ─────────────────────────
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  organisationId String
+  actorId        String?
+  actorLabel     String       @default("")
+  action         String
+  entityType     String
+  entityId       String
+  reason         String?
+  /// Redacted snapshots — see src/server/audit.ts.
+  before         Json?
+  after          Json?
+  ipHash         String?
+  createdAt      DateTime     @default(now())
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, createdAt])
+  @@index([entityType, entityId])
+}
+
+/// Fixed-window counters for rate limiting (works across serverless instances).
+model RateLimitBucket {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+}
+
+// ───────────────────────── Better Auth (library-managed) ─────────────────────────
+
+model User {
+  id               String   @id
+  name             String
+  email            String   @unique
+  emailVerified    Boolean  @default(false)
+  image            String?
+  twoFactorEnabled Boolean? @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
+
+  sessions     Session[]
+  accounts     Account[]
+  twoFactors   TwoFactor[]
+  memberships  Membership[]
+  staffProfile StaffProfile?
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model TwoFactor {
+  id                      String    @id
+  secret                  String
+  backupCodes             String
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime?
+
+  @@index([userId])
+  @@map("twoFactor")
+}
+
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rateLimit")
+}
